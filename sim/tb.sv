@@ -5,6 +5,7 @@ parameter int ANODE_WIDTH    = 4;
 parameter int SEGMENT_WIDTH  = 7;
 parameter int LED_WIDTH      = 3;
 parameter int ERROR_VALUE    = -1000;
+parameter int ANODE_ERROR_VALUE = -10;
 
 typedef enum logic [SEGMENT_WIDTH - 1 : 00] {
   ZERO       = 7'b1111110,
@@ -40,7 +41,7 @@ module tb();
 
 //input
 reg                 clk;
-reg                 [IN_WIDTH-1:0] in_number = 0;
+reg                 [IN_WIDTH - 1:0] in_number = 0;
 reg                 plus_key = 0;
 reg                 substract_key = 0;
 reg                 devide_key = 0;
@@ -48,15 +49,15 @@ reg                 multiply_key = 0;
 reg                 k_1 = 0;
 reg                 k_2 = 0;
 //output
-wire                [ANODE_WIDTH-1: 0] anode;
-wire                [SEGMENT_WIDTH-1: 0] seg;
-wire                [LED_WIDTH-1: 0] led;
+wire                [ANODE_WIDTH - 1: 0] anode;
+wire                [SEGMENT_WIDTH - 1: 0] seg;
+wire                [LED_WIDTH - 1: 0] led;
 //local variables
 int                 first_number = 0;
 int                 second_number = 0;
 int                 golden_result = 0;
-logic  [ANODE_WIDTH: 0]  anode_check_value  = 1;
-logic               [LED_WIDTH-1: 0] golden_led = 'b001;
+logic               [ANODE_WIDTH: 0] anode_check_value  = 1;
+logic               [LED_WIDTH - 1: 0] golden_led = 'b001;
 
 top black_box(
    .clk            (clk),
@@ -109,20 +110,20 @@ task create_number_for_tests( number_t first_or_second, int desirable_number);
   golden_result = desirable_number;
   #400us;
   case (first_or_second)
-    FIRST_NUMBER : begin
-      k_1 = 1;
-      #400us;
-      k_1 = 0;
-      first_number = in_number;
-      golden_led = 3'b010;
-    end
-    SECOND_NUMBER : begin
-      k_2 = 1;
-      #400us;
-      k_2 = 0;
-      second_number = in_number;
-      golden_led = 3'b100;
-    end
+    FIRST_NUMBER   : begin
+                       k_1 = 1;
+                       #400us;
+                       k_1 = 0;
+                       first_number = in_number;
+                       golden_led = 3'b010;
+                     end
+    SECOND_NUMBER  : begin
+                       k_2 = 1;
+                       #400us;
+                       k_2 = 0;
+                       second_number = in_number;
+                       golden_led = 3'b100;
+                     end
   endcase
 endtask
 
@@ -138,7 +139,7 @@ endtask
 
 
 task check_operation(arithmetic_t operation);
-  $display("%t, checking all possible operations", $time);
+  $display("%t, Checking operation %S", $time, operation_str(operation));
   for (int i = 0; i < (1 << IN_WIDTH);i++) begin
     create_number_for_tests(FIRST_NUMBER, i);
     for (int i = 0; i < (1 << IN_WIDTH);i++) begin
@@ -147,6 +148,25 @@ task check_operation(arithmetic_t operation);
     end
   end
 endtask
+
+
+
+function string operation_str(arithmetic_t operation);
+  case (operation)
+    PLUS            : begin
+                        operation_str = "PLUS";
+                      end
+    SUBSTRACTION    : begin
+                        operation_str = "SUBSTRACTION";
+                      end
+    DEVISION        : begin
+                        operation_str = "DEVISION";
+                      end
+    MULTIPLICATION  : begin
+                        operation_str = "MULTIPLICATION";
+                      end
+  endcase
+endfunction
 
 
 
@@ -186,38 +206,22 @@ endtask
 function int golden_current_digit();
 static logic sign = (golden_result > 0) ? 1 : -1;
   case (anode)
-    'b0001: begin
-              if(golden_result == ERROR_VALUE) begin
-                golden_current_digit = ERROR_VALUE;
+    'b0001  : begin
+              golden_current_digit= (golden_result == ERROR_VALUE) ? ERROR_VALUE : (sign * (golden_result % 10));
               end
-              else begin
-                golden_current_digit = sign * golden_result % 10;
+    'b0010  : begin
+              golden_current_digit= (golden_result == ERROR_VALUE) ? 0 : (sign * ((golden_result / 10) % 10));
               end
-            end
-    'b0010: begin
-              if(golden_result == ERROR_VALUE) begin
-                golden_current_digit = 0;
+    'b0100  : begin
+              golden_current_digit= (golden_result == ERROR_VALUE) ? 0 : (sign * ((golden_result / 100) % 10));
               end
-              else begin
-                golden_current_digit = sign * (golden_result / 10) % 10;
+    'b1000  : begin
+              golden_current_digit= (golden_result == ERROR_VALUE) ? 0 : 
+                                                                        (golden_result > 0) ? 0 : -1;
               end
-            end
-    'b0100: begin
-              if(golden_result == ERROR_VALUE) begin
-                golden_current_digit = 0;
+    default : begin
+                golden_current_digit = ANODE_ERROR_VALUE;
               end
-              else begin
-                golden_current_digit = sign * (golden_result / 100) % 10;
-              end
-            end
-    'b1000: begin
-              if(golden_result == ERROR_VALUE) begin
-                golden_current_digit = 0;
-              end
-              else begin
-                golden_current_digit = (golden_result > 0) ? 0 : -1;
-              end
-            end
    endcase
 endfunction
 
@@ -239,7 +243,7 @@ function digital_interpretation_of_segment();
     THREE           : begin
                         digital_interpretation_of_segment = 3;
                       end
-    FOUR            :begin
+    FOUR            : begin
                         digital_interpretation_of_segment = 4;
                       end
     FIVE            : begin
@@ -300,20 +304,6 @@ task check_led();
       else $warning("%t, Diods are wrong!",$time);
   end
 endtask
-
-
-
-
-//doesn't work and I don't know why
-
-property concurrent_property;
-  @(posedge clk)
-    (anode == 1) ##1 (anode == 2) ##1 (anode == 4) ##1 (anode == 8) ##1 (anode == 1);
-endproperty
-
-
-concurrent_asserction: assert property(concurrent_property);
-
 
 
 
