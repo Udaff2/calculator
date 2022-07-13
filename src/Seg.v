@@ -10,6 +10,11 @@ module Seg(
   output reg [7:0]segments
 );
 
+initial begin
+ segments = 8'b11000000;
+ data = 0;
+end
+
 reg [7:0]data;
 reg [2:0]contr;
 
