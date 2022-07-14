@@ -1,37 +1,39 @@
 `timescale 1 ns / 100 ps
 
-parameter int IN_WIDTH       = 4;
-parameter int ANODE_WIDTH    = 4;
-parameter int SEGMENT_WIDTH  = 7;
-parameter int LED_WIDTH      = 3;
-parameter int ERROR_VALUE    = -1000;
-parameter int ANODE_ERROR_VALUE = -10;
+parameter int IN_WIDTH                  = 4;
+parameter int ANODE_WIDTH               = 4;
+parameter int SEGMENT_WIDTH             = 8;
+parameter int LED_WIDTH                 = 3;
+parameter int NUMBER_OF_ARITHM_BUTTONS  = 4;
+parameter int NUMBER_OF_ENTER_BUTTONS   = 2;
+parameter int ERROR_VALUE               = -1000;
+parameter int ANODE_ERROR_VALUE         = -10;
 
 typedef enum logic [SEGMENT_WIDTH - 1 : 00] {
-  ZERO       = 7'b1111110,
-  ONE        = 7'b0110000,
-  TWO        = 7'b1101101,
-  THREE      = 7'b1111001,
-  FOUR       = 7'b0110011,
-  FIVE       = 7'b1011011,
-  SIX        = 7'b1011111,
-  SEVEN      = 7'b1110000,
-  EIGHT      = 7'b1111111,
-  NINE       = 7'b1111011,
-  E          = 7'b1001111,
-  MINUS      = 7'b0000001
+  ZERO       = 8'b11000000,
+  ONE        = 8'b11111001,
+  TWO        = 8'b10100100,
+  THREE      = 8'b10110000,
+  FOUR       = 8'b10011001,
+  FIVE       = 8'b10010010,
+  SIX        = 8'b10000010,
+  SEVEN      = 8'b11111000,
+  EIGHT      = 8'b10000000,
+  NINE       = 8'b10010000,
+  E          = 8'b10000110,
+  MINUS      = 8'b10111111
 } segment_t;
 
 typedef enum {
-  FIRST_NUMBER   = 1,
-  SECOND_NUMBER  = 2
+  FIRST_NUMBER   = 0,
+  SECOND_NUMBER  = 1
 } number_t;
 
 typedef enum {
-  PLUS           = 1,
-  SUBSTRACTION   = 2,
-  DEVISION       = 3,
-  MULTIPLICATION = 4
+  PLUS            = 0,
+  SUBSTRACTION    = 1,
+  MULTIPLICATION  = 2,
+  DEVISION        = 3
 } arithmetic_t;
 
 
@@ -40,36 +42,28 @@ module tb();
 
 
 //input
-reg                 clk;
-reg                 [IN_WIDTH - 1:0] in_number = 0;
-reg                 plus_key = 0;
-reg                 substract_key = 0;
-reg                 devide_key = 0;
-reg                 multiply_key = 0;
-reg                 k_1 = 0;
-reg                 k_2 = 0;
+reg                                     clk;
+reg  [IN_WIDTH - 1:0]                   in_number = 0;
+reg  [NUMBER_OF_ARITHM_BUTTONS - 1:0]   arithmetic_button = 4'b0000;
+reg  [NUMBER_OF_ENTER_BUTTONS- 1:0]     enter_button = 2'b00;
 //output
-wire                [ANODE_WIDTH - 1: 0] anode;
-wire                [SEGMENT_WIDTH - 1: 0] seg;
-wire                [LED_WIDTH - 1: 0] led;
+wire  [ANODE_WIDTH - 1: 0]    anodes;
+wire  [SEGMENT_WIDTH - 1: 0]  segments;
+wire  [LED_WIDTH - 1: 0]      led;
 //local variables
-int                 first_number = 0;
-int                 second_number = 0;
-int                 golden_result = 0;
-logic               [ANODE_WIDTH: 0] anode_check_value  = 1;
-logic               [LED_WIDTH - 1: 0] golden_led = 'b001;
+int                        first_number = 0;
+int                        second_number = 0;
+int                        golden_result = 0;
+logic  [ANODE_WIDTH: 0]    anode_check_value  = 1;
+logic  [LED_WIDTH - 1: 0]  golden_led = 'b001;
 
 top black_box(
    .clk            (clk),
    .in_number      (in_number),
-   .plus_key       (plus_key),
-   .substract_key  (substract_key),
-   .devide_key     (devide_key),
-   .multiply_key   (multiply_key),
-   .k_1            (k_1),
-   .k_2            (k_2),
-   .anode          (anode),
-   .seg            (seg),
+   .arif           (arithmetic_button),
+   .key            (enter_button),
+   .anodes         (anodes),
+   .segments       (segments),
    .led            (led)
 );
 
@@ -77,7 +71,7 @@ top black_box(
     clk = 0;
     forever #10 clk = ~clk;  // Generate clock signal 10 MHz
   end
-
+  
   
 //main testbench
 initial
@@ -85,7 +79,12 @@ initial
     fork
       //all useful tasks
       begin
-        check_operation( PLUS );
+        display_all_numbers(FIRST_NUMBER);
+//        display_all_numbers(SECOND_NUMBER);
+//        check_operation(PLUS);
+//        check_operation(SUBSTRACTION);
+//        check_operation(MULTIPLICATION);
+//        check_operation(DEVISION);
       end
        //Threads that infinitely check with @(anode)
 //      forever begin 
@@ -102,8 +101,6 @@ initial
     #10us;
     $finish;
   end
-
-  
   
 task create_number_for_tests( number_t first_or_second, int desirable_number);
   in_number = desirable_number;
@@ -111,17 +108,17 @@ task create_number_for_tests( number_t first_or_second, int desirable_number);
   #400us;
   case (first_or_second)
     FIRST_NUMBER   : begin
-                       k_1 = 1;
-                       #400us;
-                       k_1 = 0;
+                       enter_button[0] = 1;
                        first_number = in_number;
+                       #400us;
+                       enter_button[0] = 0;
                        golden_led = 3'b010;
                      end
     SECOND_NUMBER  : begin
-                       k_2 = 1;
-                       #400us;
-                       k_2 = 0;
+                       enter_button[1] = 1;
                        second_number = in_number;
+                       #400us;
+                       enter_button[1] = 0;
                        golden_led = 3'b100;
                      end
   endcase
@@ -130,7 +127,7 @@ endtask
 
 
 task display_all_numbers(number_t number);
-  $display("%t, displaying all possible numbers", $time);
+  $display("%t, Displaying all possible numbers making %S ", $time, number.name());
   for (int i = 0; i < (1 << IN_WIDTH);i++) begin
     create_number_for_tests(number, i);
   end
@@ -139,7 +136,7 @@ endtask
 
 
 task check_operation(arithmetic_t operation);
-  $display("%t, Checking operation %S", $time, operation_str(operation));
+  $display("%t, Checking operation %S", $time, operation.name());
   for (int i = 0; i < (1 << IN_WIDTH);i++) begin
     create_number_for_tests(FIRST_NUMBER, i);
     for (int i = 0; i < (1 << IN_WIDTH);i++) begin
@@ -151,23 +148,6 @@ endtask
 
 
 
-function string operation_str(arithmetic_t operation);
-  case (operation)
-    PLUS            : begin
-                        operation_str = "PLUS";
-                      end
-    SUBSTRACTION    : begin
-                        operation_str = "SUBSTRACTION";
-                      end
-    DEVISION        : begin
-                        operation_str = "DEVISION";
-                      end
-    MULTIPLICATION  : begin
-                        operation_str = "MULTIPLICATION";
-                      end
-  endcase
-endfunction
-
 
 
 task press_and_unpress_arithmetic_button(arithmetic_t operation);
@@ -175,27 +155,27 @@ task press_and_unpress_arithmetic_button(arithmetic_t operation);
   case (operation)
     PLUS            : begin
                         golden_result = first_number + second_number;
-                        plus_key = 1;
+                        arithmetic_button[0] = 1;
                         #400us;
-                        plus_key = 0;
+                        arithmetic_button[0] = 0;
                       end
     SUBSTRACTION    : begin
                         golden_result = first_number - second_number;
-                        substract_key = 1;
+                        arithmetic_button[1] = 1;
                         #400us;
-                        substract_key = 0;
+                        arithmetic_button[1] = 0;
                       end
     DEVISION        : begin
                         golden_result = ((second_number == 0) ? ERROR_VALUE : (first_number / second_number)); 
-                        devide_key = 1;
+                        arithmetic_button[3] = 1;
                         #400us;
-                        devide_key = 0;
+                        arithmetic_button[3] = 0;
                       end
     MULTIPLICATION  : begin
                         golden_result = first_number * second_number;
-                        multiply_key = 1;
+                        arithmetic_button[2] = 1;
                         #400us;
-                        multiply_key = 0;
+                        arithmetic_button[2] = 0;
                       end
   endcase
   golden_led = 3'b001;
@@ -204,18 +184,18 @@ endtask
 
 
 function int golden_current_digit();
-static logic sign = (golden_result > 0) ? 1 : -1;
-  case (anode)
-    'b0001  : begin
+static int sign = (golden_result >= 0) ? 1 : -1;
+  case (anodes)
+    4'b1110  : begin
               golden_current_digit= (golden_result == ERROR_VALUE) ? ERROR_VALUE : (sign * (golden_result % 10));
               end
-    'b0010  : begin
+    4'b1101  : begin
               golden_current_digit= (golden_result == ERROR_VALUE) ? 0 : (sign * ((golden_result / 10) % 10));
               end
-    'b0100  : begin
+    4'b1011  : begin
               golden_current_digit= (golden_result == ERROR_VALUE) ? 0 : (sign * ((golden_result / 100) % 10));
               end
-    'b1000  : begin
+    4'b0111  : begin
               golden_current_digit= (golden_result == ERROR_VALUE) ? 0 : 
                                                                         (golden_result > 0) ? 0 : -1;
               end
@@ -229,7 +209,7 @@ endfunction
 
 
 function digital_interpretation_of_segment();
-  static segment_t read_segment = segment_t'(seg);
+  static segment_t read_segment = segment_t'(segments);
   case (read_segment)
     ZERO            : begin
                         digital_interpretation_of_segment = 0;
@@ -272,8 +252,8 @@ endfunction
 
 
 task check_anode_signal(); // TODO
-  @(anode) begin
-    if(anode == anode_check_value) begin
+  @(anodes) begin
+    if(anodes == ~anode_check_value) begin
       anode_check_value = anode_check_value << 1;
       if(anode_check_value == (1 << ANODE_WIDTH))
         begin
@@ -290,7 +270,7 @@ endtask
 
 
 task check_displayed_digit();
-  @(anode) begin
+  @(clk) begin
     assert(golden_current_digit() == digital_interpretation_of_segment())
       else $warning("%t, Displayed value is wrong!",$time);
   end
@@ -299,7 +279,7 @@ endtask
 
 
 task check_led();
-  @(anode) begin
+  @(clk) begin
     assert(golden_led == led)
       else $warning("%t, Diods are wrong!",$time);
   end
