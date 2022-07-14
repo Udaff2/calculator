@@ -10,49 +10,48 @@ module ALU(
 
 );
 
-initial begin
- control = 0;
-end
+  initial begin
+    control = 0;
+  end
 
-reg [10:0]big_1;
+  reg [10:0]big_1;
 
-always@(posedge clk_ALU)
- begin
-  case(arif_from_top)
-   14: begin
-	    ind_1 <= reg_1_from_sw + reg_2_from_sw;
-		 control <= 0;
-	   end
-	13: begin
-	    if(reg_1_from_sw < reg_2_from_sw)
-		  begin
-		   ind_1 <= reg_2_from_sw - reg_1_from_sw;
-			control <= 1;
-		  end
-		 else
-		  begin
-		   ind_1 <= reg_1_from_sw - reg_2_from_sw;
-			control <= 0;
-		  end
-		end
-	11: begin
-	    ind_1 <= reg_1_from_sw * reg_2_from_sw;
-		 control <= 0;
-		end
-	7: begin
-	    if(reg_2_from_sw == 0)
-		  begin
-		   control <= 2;
-		  end
-		 else
-		  begin
-		   big_1 = reg_1_from_sw;
-		   ind_1 = (big_1 * 100) / reg_2_from_sw;
-//         ind_1 = 256;
-			control <= 4;
-		  end
-		end
-  endcase
- end
+  always@(posedge clk_ALU)
+    begin
+      case(arif_from_top)
+        14: begin
+          ind_1 <= reg_1_from_sw + reg_2_from_sw;
+          control <= 0;
+        end
+        13: begin
+          if(reg_1_from_sw < reg_2_from_sw)
+            begin
+              ind_1 <= reg_2_from_sw - reg_1_from_sw;
+              control <= 1;
+            end
+          else
+            begin
+              ind_1 <= reg_1_from_sw - reg_2_from_sw;
+              control <= 0;
+            end
+        end
+        11: begin
+          ind_1 <= reg_1_from_sw * reg_2_from_sw;
+          control <= 0;
+        end
+        7:  begin
+          if(reg_2_from_sw == 0)
+            begin
+              control <= 2;
+            end
+          else
+            begin
+              big_1 = reg_1_from_sw;
+              ind_1 = (big_1 * 100) / reg_2_from_sw;
+              control <= 4;
+            end
+        end
+      endcase
+    end
 
 endmodule
