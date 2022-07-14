@@ -5,7 +5,7 @@ module ALU(
   input [3:0]arif_from_top,
   input clk_ALU,
 
-  output reg [7:0]ind_1,
+  output reg [10:0]ind_1,
   output reg [2:0]control
 
 );
@@ -14,7 +14,7 @@ initial begin
  control = 0;
 end
 
-reg [10:0]big;
+reg [10:0]big_1;
 
 always@(posedge clk_ALU)
  begin
@@ -46,12 +46,13 @@ always@(posedge clk_ALU)
 		  end
 		 else
 		  begin
-		   big <= reg_1_from_sw;
-		   ind_1 <= (big * 100) / reg_2_from_sw;
+		   big_1 = reg_1_from_sw;
+		   ind_1 = (big_1 * 100) / reg_2_from_sw;
+//         ind_1 = 256;
 			control <= 4;
 		  end
 		end
   endcase
  end
- 
+
 endmodule

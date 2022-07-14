@@ -1,7 +1,7 @@
 module Seg(
   input Clk,
-  input [7:0]ind_from_sw,
-  input [7:0]ind_from_ALU,
+  input [3:0]ind_from_sw,
+  input [10:0]ind_from_ALU,
   input [2:0]c_from_ALU,
   input [1:0]keys,
   input [3:0]arifs,
@@ -10,18 +10,17 @@ module Seg(
   output reg [7:0]segments
 );
 
-initial begin
- segments = 8'b11000000;
- data = 0;
-end
-
-reg [7:0]data;
+reg [10:0]data;
 reg [2:0]contr;
 
+//reg [7:0]data;
+//reg [2:0]contr;
+
 //выбор данных для вывода
+
 always@(posedge Clk)
    begin
-	 if (keys > 0)
+	 if (keys[0] == 0 || keys[1] == 0)
 	  begin
 	   data <= ind_from_sw;
 	   contr <= 0;
@@ -33,17 +32,6 @@ always@(posedge Clk)
 	  end
    end
 
-//always@(posedge keys)
-//   begin
-//	 data = ind_from_sw;
-//	 contr = 0;	
-//	end
-//	
-//always@(posedge arifs)
-//   begin
-//	 data = ind_from_ALU;
-//	 contr = c_from_ALU;	
-//	end
 
 //инвертация анодов
 //wire [3:0]Anodes;
@@ -51,10 +39,13 @@ always@(posedge Clk)
 
 //делитель частоты
 reg [11:00]cnt = 0;
-assign clk2 = cnt[11];
+reg clk2;
+//assign clk2 = cnt[11];
+
 always@(posedge Clk) 
  begin 
   cnt <= cnt + 12'b1;
+  clk2 <= cnt[11];
  end
 
 //динамическая индикация
@@ -69,7 +60,9 @@ reg [3:0]data1 = 0;
 
 always@(posedge Clk) 
    begin
-	//тривиальный случай
+
+//тривиальный случай
+
     if(contr == 0) begin
         case (anodes)
           14: data1 <= (data%10);
@@ -91,7 +84,9 @@ always@(posedge Clk)
 				default: segments <= 8'b11000000;
         endcase
       end
-	//отрицательный результат
+
+//отрицательный результат
+
      else if(contr == 1) begin
         case (anodes)
           14: data1 <= (data%10);
@@ -114,7 +109,9 @@ always@(posedge Clk)
 				default: segments <= 8'b11000000;
         endcase
       end
-	//деление на ноль
+
+//деление на ноль
+
      else if(contr == 2) begin
         case (anodes)
           14: data1 <= 11;
@@ -128,7 +125,9 @@ always@(posedge Clk)
 				default: segments <= 8'b11000000;
         endcase
       end
-	//деление
+
+//деление
+
       else if(contr == 4) begin
         case (anodes)
           14: data1 <= (data%10);
@@ -136,7 +135,7 @@ always@(posedge Clk)
           11: data1 <= ((data - (data % 100)) % 1000) / 100;
           7: data1 <= ((data - (data % 1000)) % 10000) / 1000;
         endcase
-        if (anodes == 7)
+        if (anodes == 11)
          begin
           case (data1)
 				4'd0: segments <= 8'b01000000;
@@ -169,5 +168,5 @@ always@(posedge Clk)
         end
       end
    end
-	
+
 endmodule
