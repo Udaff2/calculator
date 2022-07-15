@@ -1,18 +1,33 @@
-module calculator(
-
+module calculator #(
+  parameter integer ENTER_SW = 4,
+  parameter integer ALU_SW   = 4,
+  parameter integer RECORD   = 2,
+  parameter integer ANODES   = 4,
+  parameter integer SEG_7    = 8,
+  parameter integer LED      = 3,
+  parameter integer IND_REG  = 4,
+  parameter integer CONTROLS = 3,
+  parameter integer IND_CON  = 11
+)(
   input clk,
-  input [3:0]in_number,
-  input [3:0]arif,
-  input [1:0]key,
+  input [ ENTER_SW - 1 : 00 ] in_number,
+  input [ ALU_SW - 1   : 00 ] arif,
+  input [ RECORD -1    : 00 ] key,
 
-  output [3:0]anodes,
-  output [7:0]segments,
-  output reg [2:0]led
+  output [ ANODES -1   : 00 ] anodes,
+  output [ SEG_7 -1    : 00 ] segments,
+  output reg [ LED -1  : 00 ] led
 );
 
-  reg [3:0]ind;
-  reg [3:0]reg_1;
-  reg [3:0]reg_2;
+  parameter integer LED1 = 3'b110;
+  parameter integer LED2 = 3'b101;
+  parameter integer LED3 = 3'b011;
+  parameter integer KEY1 = 2'b10;
+  parameter integer KEY2 = 2'b01;
+
+  reg [ IND_REG - 1 : 00 ] ind;
+  reg [ IND_REG - 1 : 00 ] reg_1;
+  reg [ IND_REG - 1 : 00 ] reg_2;
 
   initial
     begin
@@ -23,11 +38,11 @@ module calculator(
     begin
       if(arif < 15)
         begin
-          led <= 3'b110;
+          led <= LED1;
         end
       case(key)
-        2'b10: led <= 3'b101;
-        2'b01: led <= 3'b011;
+        KEY1: led <= LED2;
+        KEY2: led <= LED3;
       endcase
     end
 
@@ -35,17 +50,17 @@ module calculator(
     begin
       ind <= ~in_number;
       case(key)
-        1: begin
+        KEY2: begin
           reg_2 <= ~in_number;
         end
-        2: begin
+        KEY1: begin
           reg_1 <= ~in_number;
         end
       endcase
     end
 
-  wire [2:0] controls;
-  wire [10:0] ind_con;
+  wire [ CONTROLS - 1 : 00 ] controls;
+  wire [  IND_CON - 1 : 00 ] ind_con;
 
   ALU ALU(
     .clk_ALU(clk),
@@ -57,11 +72,10 @@ module calculator(
   );
 
   segment segment(
-    .Clk           (clk     ),
+    .clk           (clk     ),
     .ind_from_sw   (ind     ),
     .ind_from_ALU  (ind_con ),
     .c_from_ALU    (controls),
-    .keys          (key     ),
     .arifs         (arif    ),
     .anodes        (anodes  ),
     .segments      (segments)
