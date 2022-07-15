@@ -1,4 +1,4 @@
-module top(
+module calculator(
 
   input clk,
   input [3:0]in_number,
