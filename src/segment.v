@@ -2,7 +2,6 @@ module segment #(
   parameter integer IND_SW  = 4,
   parameter integer IND_ALU = 11,
   parameter integer C_ALU   = 3,
-  parameter integer KEYS    = 2,
   parameter integer ARIFS   = 4,
   parameter integer ANODES  = 4,
   parameter integer SEG     = 8,
@@ -14,7 +13,6 @@ module segment #(
   input [ IND_SW - 1   : 00 ] ind_from_sw,
   input [ IND_ALU - 1  : 00 ] ind_from_ALU,
   input [ C_ALU - 1    : 00 ] c_from_ALU,
-  input [ KEYS - 1     : 00 ] keys,
   input [ ARIFS - 1    : 00 ] arifs,
 
   output [ ANODES - 1  : 00 ] anodes,
@@ -145,7 +143,7 @@ module segment #(
           ANODE_3: number_to_seg <= ((data - (data % 100)) % 1000) / 100;
           ANODE_4: number_to_seg <= ((data - (data % 1000)) % 10000) / 1000;
         endcase
-        if (anodes == 11)
+        if (anodes == ANODE_3)
           begin
             case (number_to_seg)
           4'd0:   segments <= {ON_DOT, DIG_0};

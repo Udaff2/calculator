@@ -19,11 +19,11 @@ module calculator #(
   output reg [ LED -1  : 00 ] led
 );
 
-  parameter integer LED1 = 3'b001;
-  parameter integer LED2 = 3'b010;
-  parameter integer LED3 = 3'b100;
-  parameter integer KEY1 = 2'b01;
-  parameter integer KEY2 = 2'b10;
+  parameter integer LED1 = 3'b110;
+  parameter integer LED2 = 3'b101;
+  parameter integer LED3 = 3'b011;
+  parameter integer KEY1 = 2'b10;
+  parameter integer KEY2 = 2'b01;
 
   reg [ IND_REG - 1 : 00 ] ind;
   reg [ IND_REG - 1 : 00 ] reg_1;
@@ -38,11 +38,11 @@ module calculator #(
     begin
       if(arif < 15)
         begin
-          led <= ~LED1;
+          led <= LED1;
         end
       case(key)
-        ~KEY1: led <= ~LED2;
-        ~KEY2: led <= ~LED3;
+        KEY1: led <= LED2;
+        KEY2: led <= LED3;
       endcase
     end
 
@@ -50,10 +50,10 @@ module calculator #(
     begin
       ind <= ~in_number;
       case(key)
-        ~KEY1: begin
+        KEY2: begin
           reg_2 <= ~in_number;
         end
-        ~KEY2: begin
+        KEY1: begin
           reg_1 <= ~in_number;
         end
       endcase
@@ -72,11 +72,10 @@ module calculator #(
   );
 
   segment segment(
-    .Clk           (clk     ),
+    .clk           (clk     ),
     .ind_from_sw   (ind     ),
     .ind_from_ALU  (ind_con ),
     .c_from_ALU    (controls),
-    .keys          (key     ),
     .arifs         (arif    ),
     .anodes        (anodes  ),
     .segments      (segments)
