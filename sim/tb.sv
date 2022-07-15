@@ -8,6 +8,8 @@ parameter int NUMBER_OF_ARITHM_BUTTONS  = 4;
 parameter int NUMBER_OF_ENTER_BUTTONS   = 2;
 parameter int ERROR_VALUE               = -1000;
 parameter int ANODE_ERROR_VALUE         = -10;
+parameter int ANODE_ASSERTION_ITERATION = 1000;
+parameter int DEVIDER_WIDTH             = 12;
 
 typedef enum logic [SEGMENT_WIDTH - 1 : 00] {
   ZERO       = 8'b11000000,
@@ -51,11 +53,12 @@ wire  [ANODE_WIDTH - 1: 0]    anodes;
 wire  [SEGMENT_WIDTH - 1: 0]  segments;
 wire  [LED_WIDTH - 1: 0]      led;
 //local variables
-int                        first_number = 0;
-int                        second_number = 0;
-int                        golden_result = 0;
-logic  [ANODE_WIDTH: 0]    anode_check_value  = 1;
-logic  [LED_WIDTH - 1: 0]  golden_led = 'b001;
+int                            first_number = 0;
+int                            second_number = 0;
+int                            golden_result = 0;
+logic  [ANODE_WIDTH: 0]        anode_check_value  = 1;
+logic  [LED_WIDTH - 1: 0]      golden_led = 'b110;
+logic  [DEVIDER_WIDTH - 1: 0]  devider = 0;
 
 top black_box(
    .clk            (clk),
@@ -69,9 +72,15 @@ top black_box(
 
   initial begin
     clk = 0;
-    forever #10 clk = ~clk;  // Generate clock signal 10 MHz
+    forever #10 clk = ~clk;  // Generate clock signal 50 MHz
   end
   
+  //devider
+  initial begin
+    forever begin
+      @(posedge clk) devider <= devider + 1;
+    end
+  end
   
 //main testbench
 initial
@@ -80,22 +89,19 @@ initial
       //all useful tasks
       begin
         display_all_numbers(FIRST_NUMBER);
-//        display_all_numbers(SECOND_NUMBER);
-//        check_operation(PLUS);
-//        check_operation(SUBSTRACTION);
-//        check_operation(MULTIPLICATION);
-//        check_operation(DEVISION);
+        display_all_numbers(SECOND_NUMBER);
+        check_operation(PLUS);
+        check_operation(SUBSTRACTION);
+        check_operation(MULTIPLICATION);
+        check_operation(DEVISION);
       end
-       //Threads that infinitely check with @(anode)
-//      forever begin 
-//        check_anode_signal();
-//      end
-//      forever begin 
-//        check_displayed_digit();
-//      end
-//      forever begin 
-//        check_led();
-//      end
+       //Threads that infinitely check with @(clk)
+      //forever begin 
+      //  check_displayed_digit();
+      //end
+      forever begin 
+        check_led();
+      end
     join_any
     disable fork;
     #10us;
@@ -109,17 +115,18 @@ task create_number_for_tests( number_t first_or_second, int desirable_number);
   case (first_or_second)
     FIRST_NUMBER   : begin
                        enter_button[0] = 1;
+                       golden_led = 3'b101;
                        first_number = in_number;
                        #400us;
                        enter_button[0] = 0;
-                       golden_led = 3'b010;
+                       #400us;
                      end
     SECOND_NUMBER  : begin
                        enter_button[1] = 1;
+                       golden_led = 3'b011;
                        second_number = in_number;
                        #400us;
                        enter_button[1] = 0;
-                       golden_led = 3'b100;
                      end
   endcase
 endtask
@@ -156,32 +163,37 @@ task press_and_unpress_arithmetic_button(arithmetic_t operation);
     PLUS            : begin
                         golden_result = first_number + second_number;
                         arithmetic_button[0] = 1;
+                        golden_led = 3'b001;
                         #400us;
                         arithmetic_button[0] = 0;
+                        #400us;
                       end
     SUBSTRACTION    : begin
                         golden_result = first_number - second_number;
                         arithmetic_button[1] = 1;
+                        golden_led = 3'b001;
                         #400us;
                         arithmetic_button[1] = 0;
+                        #400us;
                       end
     DEVISION        : begin
                         golden_result = ((second_number == 0) ? ERROR_VALUE : (first_number / second_number)); 
                         arithmetic_button[3] = 1;
+                        golden_led = 3'b001;
                         #400us;
                         arithmetic_button[3] = 0;
+                        #400us;
                       end
     MULTIPLICATION  : begin
                         golden_result = first_number * second_number;
                         arithmetic_button[2] = 1;
+                        golden_led = 3'b001;
                         #400us;
                         arithmetic_button[2] = 0;
+                        #400us;
                       end
   endcase
-  golden_led = 3'b001;
 endtask
-
-
 
 function int golden_current_digit();
 static int sign = (golden_result >= 0) ? 1 : -1;
@@ -197,7 +209,7 @@ static int sign = (golden_result >= 0) ? 1 : -1;
               end
     4'b0111  : begin
               golden_current_digit= (golden_result == ERROR_VALUE) ? 0 : 
-                                                                        (golden_result > 0) ? 0 : -1;
+                                                                        (golden_result >= 0) ? 0 : -1;
               end
     default : begin
                 golden_current_digit = ANODE_ERROR_VALUE;
@@ -249,22 +261,22 @@ function digital_interpretation_of_segment();
                       end
   endcase
 endfunction
-
-
-task check_anode_signal(); // TODO
-  @(anodes) begin
-    if(anodes == ~anode_check_value) begin
-      anode_check_value = anode_check_value << 1;
-      if(anode_check_value == (1 << ANODE_WIDTH))
-        begin
-          anode_check_value = 1;
-        end
-    end
-    else begin
-      $warning("%t, Anode signal is wrong!", $time);
-    end
-  end
-endtask
+//
+//
+//task check_anode_signal(); // TODO
+//  @(anodes) begin
+//    if(anodes == ~anode_check_value) begin
+//      anode_check_value = anode_check_value << 1;
+//      if(anode_check_value == (1 << ANODE_WIDTH))
+//        begin
+//          anode_check_value = 1;
+//        end
+//    end
+//    else begin
+//      $warning("%t, Anode signal is wrong!", $time);
+//    end
+//  end
+//endtask
 
 
 
@@ -285,6 +297,23 @@ task check_led();
   end
 endtask
 
+
+
+
+
+sequence anode_seq;
+  (anodes == 4'b1110) ##1 (anodes == 4'b1101) ##1 (anodes == 4'b1011) ##1 (anodes == 4'b0111);
+endsequence
+
+property anode_signal_property;
+  @(posedge devider[11])
+    anode_seq [*ANODE_ASSERTION_ITERATION];
+endproperty
+
+
+initial begin
+  my_assertion: assume property (anode_signal_property) else $display("%t, anode signal is wrong, anode = %d", $time, anodes);
+end
 
 
 endmodule 
