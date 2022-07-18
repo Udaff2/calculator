@@ -29,20 +29,23 @@ module ALU #(
 
   reg [ REG - 1 : 00 ] reg_1_from_sw;
   reg [ REG - 1 : 00 ] reg_2_from_sw;
+  wire [ REG - 1 : 00 ] big;
+
+  assign big = in_numb_from_top;
 
   always@(posedge clk_ALU)
     begin
       case(keys)
         KEY2: begin
-          reg_2_from_sw = in_numb_from_top;
+          reg_2_from_sw = big;
         end
         KEY1: begin
-          reg_1_from_sw = in_numb_from_top;
+          reg_1_from_sw = big;
         end
       endcase
       case(arif_from_top)
         DEFAULT: begin
-          ind_1 = in_numb_from_top;
+          ind_1 = big;
           control = CODE_P;
         end
         PLUS: begin

@@ -49,11 +49,11 @@ module calculator #(
 
   ALU ALU(
     .clk_ALU(clk),
-    .arif_from_top    (arif     ),
+    .arif_from_top    (arif         ),
     .in_numb_from_top (in_number_out),
-	  .keys             (key      ),
-    .ind_1            (ind_con  ),
-    .control          (controls )
+	  .keys             (key          ),
+    .ind_1            (ind_con      ),
+    .control          (controls     )
   );
 
   segment segment(
