@@ -1,26 +1,18 @@
 module segment #(
-  parameter integer IND_SW  = 4,
   parameter integer IND_ALU = 11,
   parameter integer C_ALU   = 3,
-  parameter integer ARIFS   = 4,
   parameter integer ANODES  = 4,
   parameter integer SEG     = 8,
-  parameter integer DATA    = 11,
   parameter integer CONTR   = 3,
   parameter integer CNT     = 12
 )(
   input clk,
-  input [ IND_SW - 1   : 00 ] ind_from_sw,
-  input [ IND_ALU - 1  : 00 ] ind_from_ALU,
-  input [ C_ALU - 1    : 00 ] c_from_ALU,
-  input [ ARIFS - 1    : 00 ] arifs,
+  input [ IND_ALU - 1  : 00 ] data,
+  input [ C_ALU - 1    : 00 ] contr,
 
   output [ ANODES - 1  : 00 ] anodes,
   output reg [ SEG - 1 : 00 ] segments
 );
-
-  reg [ DATA - 1  : 00 ] data;
-  reg [ CONTR - 1 : 00 ] contr;
 
 
   parameter integer NUMBER_TO_SEG  = 4;
@@ -42,20 +34,6 @@ module segment #(
   parameter ERROR                  = 7'b0000110;
   parameter OFF_DOT                = 1'b1;
   parameter ON_DOT                 = 1'b0; 
-
-  always@ (posedge clk)
-    begin
-      if(arifs == 15)
-        begin
-          data <= ind_from_sw;
-          contr <= 0;
-        end
-      else if(arifs <15)
-        begin
-          data <= ind_from_ALU;
-          contr <= c_from_ALU;
-        end
-    end
 
   reg [ CNT - 1 : 00 ] cnt = 0;
   reg clk2;

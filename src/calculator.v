@@ -5,7 +5,6 @@ module calculator #(
   parameter integer ANODES   = 4,
   parameter integer SEG_7    = 8,
   parameter integer LED      = 3,
-  parameter integer IND_REG  = 4,
   parameter integer CONTROLS = 3,
   parameter integer IND_CON  = 11
 )(
@@ -25,10 +24,6 @@ module calculator #(
   parameter integer KEY1 = 2'b10;
   parameter integer KEY2 = 2'b01;
 
-  reg [ IND_REG - 1 : 00 ] ind;
-  reg [ IND_REG - 1 : 00 ] reg_1;
-  reg [ IND_REG - 1 : 00 ] reg_2;
-
   initial
     begin
       led = 3'b110;
@@ -46,37 +41,25 @@ module calculator #(
       endcase
     end
 
-  always@(posedge clk)
-    begin
-      ind <= ~in_number;
-      case(key)
-        KEY2: begin
-          reg_2 <= ~in_number;
-        end
-        KEY1: begin
-          reg_1 <= ~in_number;
-        end
-      endcase
-    end
-
   wire [ CONTROLS - 1 : 00 ] controls;
   wire [  IND_CON - 1 : 00 ] ind_con;
+  wire [ ENTER_SW - 1 : 00 ] in_number_out;
+  
+  assign in_number_out = ~in_number;
 
   ALU ALU(
     .clk_ALU(clk),
-    .reg_1_from_sw  (reg_1   ),
-    .reg_2_from_sw  (reg_2   ),
-    .arif_from_top  (arif    ),
-    .ind_1          (ind_con ),
-    .control        (controls)
+    .arif_from_top    (arif     ),
+    .in_numb_from_top (in_number_out),
+	  .keys             (key      ),
+    .ind_1            (ind_con  ),
+    .control          (controls )
   );
 
   segment segment(
     .clk           (clk     ),
-    .ind_from_sw   (ind     ),
-    .ind_from_ALU  (ind_con ),
-    .c_from_ALU    (controls),
-    .arifs         (arif    ),
+    .data          (ind_con ),
+    .contr         (controls),
     .anodes        (anodes  ),
     .segments      (segments)
   );
