@@ -3,11 +3,12 @@ module ALU #(
   parameter integer ARIF    = 4,
   parameter integer IND_1   = 11,
   parameter integer CONTROL = 3,
-  parameter integer RECORD  = 2
+  parameter integer RECORD  = 2,
+  parameter integer ENTER_SW = 4
 )(
   input clk_ALU,
   input [ ARIF - 1   : 00 ] arif_from_top,
-  input [ IND_1 - 1  : 00 ] in_numb_from_top,
+  input [ ENTER_SW - 1  : 00 ] in_numb_from_top,
   input [ RECORD - 1 : 00 ] keys,
 
   output reg [ IND_1 - 1   : 00 ] ind_1,
