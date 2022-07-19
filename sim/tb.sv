@@ -11,6 +11,7 @@ parameter int ANODE_ERROR_VALUE               = -10;
 parameter int DIGITAL_INTERPRETATION_ERROR    = -17;
 parameter int ANODE_ASSERTION_ITERATION       = 1000;
 parameter int POINTER_OFFSET                  = 10;
+parameter int SHIFT_WIDTH                     = 2;
 
 typedef enum logic [SEGMENT_WIDTH - 1 : 00] {
   ZERO               = 8'b11000000,
@@ -67,7 +68,8 @@ module tb();
   int                                       golden_result = 0;
   logic  [LED_WIDTH - 1: 0]                 golden_led = 'b110;
   logic                                     devision_flag = 0;
-
+  logic                                     need_to_check_flag = 1;
+  logic [SHIFT_WIDTH - 1:0]                 anode_shift = 0;
   calculator black_box(
      .clk            (clk),
      .in_number      (in_number),
@@ -98,11 +100,15 @@ module tb();
         forever begin
           check_led();
         end
+        forever begin
+          check_anode();
+        end
       join_any
       disable fork;
       #10us;
       $finish;
     end
+
   task create_number_for_tests( number_t first_or_second,
   logic [IN_WIDTH - 1:0]    desirable_number);
     in_number = ~desirable_number;
@@ -126,14 +132,6 @@ module tb();
         #400us;
       end
     endcase
-  endtask
-
-  task display_all_numbers(number_t number);
-    $display("%t, Displaying all possible numbers remembering %S ",
-      $time, number.name());
-    for (int i = 0; i < (1 << IN_WIDTH);i++) begin
-      create_number_for_tests(number, i);
-    end
   endtask
 
   task check_operation(arithmetic_t operation);
@@ -277,19 +275,34 @@ module tb();
       DIGITAL_INTERPRETATION_ERROR;
     endcase
   endfunction
+
   task check_displayed_digit();
     @(segments) begin
-      void'(golden_current_digit());
-      void'(digital_interpretation_of_segment());
-      assert(golden_current_digit_int === digital_interpretation_of_segment_int)
-      else $warning("%t, Displayed value is wrong!",$time);
+      if(need_to_check_flag) begin
+        void'(golden_current_digit());
+        void'(digital_interpretation_of_segment());
+        assert(golden_current_digit_int===digital_interpretation_of_segment_int)
+          else $warning("%t, Displayed value is wrong!",$time);
+      end
     end
   endtask
 
   task check_led();
     @(led) begin
-      assert(golden_led == led)
-        else $warning("%t, Diods are wrong!",$time);
+      if(need_to_check_flag) begin
+        assert(golden_led == led)
+          else $warning("%t, Diods are wrong!",$time);
+      end
+    end
+  endtask
+
+
+  task check_anode();
+    @(anodes) begin
+      if(anodes == (4'b1111 - (4'b0001 << anode_shift))) begin
+        anode_shift++;
+      end
+      else $warning("%t, Anodes are wrong!",$time);
     end
   endtask
 
