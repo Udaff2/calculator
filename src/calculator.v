@@ -44,14 +44,14 @@ module calculator #(
   wire [ CONTROLS - 1 : 00 ] controls;
   wire [  IND_CON - 1 : 00 ] ind_con;
   wire [ ENTER_SW - 1 : 00 ] in_number_out;
-  
+
   assign in_number_out = ~in_number;
 
   ALU ALU(
     .clk_ALU(clk),
     .arif_from_top    (arif         ),
     .in_numb_from_top (in_number_out),
-	  .keys             (key          ),
+    .keys             (key          ),
     .ind_1            (ind_con      ),
     .control          (controls     )
   );

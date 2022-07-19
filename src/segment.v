@@ -33,7 +33,7 @@ module segment #(
   parameter MINUS                  = 7'b0111111;
   parameter ERROR                  = 7'b0000110;
   parameter OFF_DOT                = 1'b1;
-  parameter ON_DOT                 = 1'b0; 
+  parameter ON_DOT                 = 1'b0;
 
   reg [ CNT - 1 : 00 ] cnt = 0;
   reg clk2;
