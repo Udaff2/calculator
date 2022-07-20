@@ -33,7 +33,7 @@ module segment #(
   parameter MINUS                  = 7'b0111111;
   parameter ERROR                  = 7'b0000110;
   parameter OFF_DOT                = 1'b1;
-  parameter ON_DOT                 = 1'b0;
+  parameter ON_DOT                 = 1'b0; 
 
   reg [ CNT - 1 : 00 ] cnt = 0;
   reg clk2;
@@ -57,10 +57,10 @@ module segment #(
     begin
       if(contr == 0) begin
         case (anodes)
-          ANODE_1: number_to_seg <= (data%10);
-          ANODE_2: number_to_seg <= ((data - (data % 10)) % 100) / 10;
-          ANODE_3: number_to_seg <= ((data - (data % 100)) % 1000) / 100;
-          ANODE_4: number_to_seg <= ((data - (data % 1000)) % 10000) / 1000;
+          ANODE_1: number_to_seg <= (data % 10);
+          ANODE_2: number_to_seg <= (data / 10) % 10;
+          ANODE_3: number_to_seg <= (data / 100) % 10;
+          ANODE_4: number_to_seg <= (data / 1000);
         endcase
         case (number_to_seg)
           4'd0:    segments <= {OFF_DOT, DIG_0};
@@ -79,9 +79,9 @@ module segment #(
 
       else if(contr == 1) begin
         case (anodes)
-          ANODE_1: number_to_seg <= (data%10);
-          ANODE_2: number_to_seg <= ((data - (data % 10)) % 100) / 10;
-          ANODE_3: number_to_seg <= ((data - (data % 100)) % 1000) / 100;
+          ANODE_1: number_to_seg <= (data % 10);
+          ANODE_2: number_to_seg <= (data / 10) % 10;
+          ANODE_3: number_to_seg <= (data / 100) % 10;
           ANODE_4: number_to_seg <= 10;
         endcase
         case (number_to_seg)
@@ -116,10 +116,10 @@ module segment #(
 
       else if(contr == 4) begin
         case (anodes)
-          ANODE_1: number_to_seg <= (data%10);
-          ANODE_2: number_to_seg <= ((data - (data % 10)) % 100) / 10;
-          ANODE_3: number_to_seg <= ((data - (data % 100)) % 1000) / 100;
-          ANODE_4: number_to_seg <= ((data - (data % 1000)) % 10000) / 1000;
+          ANODE_1: number_to_seg <= (data % 10);
+          ANODE_2: number_to_seg <= (data / 10) % 10;
+          ANODE_3: number_to_seg <= (data / 100) % 10;
+          ANODE_4: number_to_seg <= (data / 1000);
         endcase
         if (anodes == ANODE_3)
           begin
